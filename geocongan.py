@@ -22,7 +22,7 @@ from cyclegan import Discriminator, CycleGenerator
 from silnet import SilNet
 from utils_cyclegan import imshow, scale, print_models, view_samples
 from utils_silnet import reverse_transform, masks_to_colorimg
-from loss import silnet_loss, cycle_consistency_loss
+#from loss import silnet_loss#, cycle_consistency_loss
 from hands_dataset import HandsDataset
 
 def weights_init_normal(m):
@@ -142,9 +142,9 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
             out_y = D_Y(fake_X)
 
             g_YtoX_loss = real_mse_loss(out_x, real.expand_as(out_x))
-            reconstructed_Y_loss = cycle_consistency_loss(reconstructed_Y, images_Y, lambda_weight=10)
+            reconstructed_Y_loss = cycle_consistency_loss(reconstructed_Y, images_Y) * 10
             g_XtoY_loss = real_mse_loss(out_y, real.expand_as(out_y))
-            reconstructed_X_loss = cycle_consistency_loss(reconstructed_X, images_X, lambda_weight=10)
+            reconstructed_X_loss = cycle_consistency_loss(reconstructed_X, images_X) * 10
             geo_loss_X = silnet_loss(sil_fake_X, silhouette_X)
             geo_loss_Y = silnet_loss(sil_fake_Y, silhouette_Y)
 
@@ -301,7 +301,8 @@ d_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(d_optimizer, lr_lambda=Lambda
 criterion_identity = torch.nn.L1Loss()
 real_mse_loss = torch.nn.MSELoss()
 fake_mse_loss = torch.nn.MSELoss()
-#cycle_consistency_loss = torch.nn.L1Loss()
+cycle_consistency_loss = torch.nn.L1Loss()
+silnet_loss = torch.nn.BCELoss()
 
 real = torch.tensor(1.0, requires_grad=False).to(device)
 fake = torch.tensor(0.0, requires_grad=False).to(device)
@@ -317,9 +318,3 @@ plt.plot(losses.T[3], label='SilNet', alpha=0.5)
 plt.title("Training Losses")
 plt.legend()
 plt.savefig("loss.png")
-
-# view samples at iteration 10
-view_samples(n_epochs//10, 'samples_geocongan')
-
-# view samples at iteration 100
-view_samples(n_epochs, 'samples_geocongan')
