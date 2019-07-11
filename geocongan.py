@@ -167,7 +167,7 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
             d_X_loss = (d_loss_X_real + d_loss_X_fake) * 0.5
 
-            d_X_loss.backward(retain_graph=True)
+            d_X_loss.backward()
 
             out_y_real = D_Y(images_X)
             d_loss_Y_real = real_mse_loss(out_y_real, real.expand_as(out_y_real))
