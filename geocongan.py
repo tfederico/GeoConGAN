@@ -25,6 +25,8 @@ from utils_silnet import reverse_transform, masks_to_colorimg
 #from loss import silnet_loss#, cycle_consistency_loss
 from hands_dataset import HandsDataset
 
+import tqdm
+
 def weights_init_normal(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
@@ -102,9 +104,9 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
     fixed_Y = test_iter_Y.next()[0]
 
 
-    for epoch in tqdm(range(1, n_epochs+1)):
+    for epoch in tqdm(range(1, n_epochs+1), desc="Epoch"):
 
-        for batch_X, batch_Y in tqdm(zip(dataloader_X, dataloader_Y)):
+        for batch_X, batch_Y in tqdm(zip(dataloader_X, dataloader_Y), desc="Batch"):
 
 
             images_X, silhouette_X = batch_X
