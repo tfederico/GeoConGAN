@@ -25,7 +25,7 @@ from utils_silnet import reverse_transform, masks_to_colorimg
 #from loss import silnet_loss#, cycle_consistency_loss
 from hands_dataset import HandsDataset
 
-import tqdm
+from tqdm import tqdm
 
 def weights_init_normal(m):
     classname = m.__class__.__name__
