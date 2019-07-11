@@ -194,9 +194,10 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
         sample_every = 1#n_epochs/10
         # Save the generated samples
         if epoch % sample_every == 0:
-            G_YtoX.eval() # set generators to eval mode for sample generation
-            G_XtoY.eval()
-            save_samples(epoch, fixed_Y, fixed_X, G_YtoX, G_XtoY, batch_size=batch_size)
+            with torch.no_grad():
+                G_YtoX.eval() # set generators to eval mode for sample generation
+                G_XtoY.eval()
+                save_samples(epoch, fixed_Y, fixed_X, G_YtoX, G_XtoY, batch_size=batch_size)
             G_YtoX.train()
             G_XtoY.train()
 
@@ -274,6 +275,8 @@ G_XtoY, G_YtoX, D_X, D_Y = create_model(n_res_blocks=n_res_blocks, device=device
 S = SilNet()
 S.load_state_dict(torch.load("silnet.pth"))
 S.to(device)
+for param in S.parameters():
+    param.requires_grad = False
 S.eval()
 # print all of the models
 print_models(G_XtoY, G_YtoX, D_X, D_Y, S)
