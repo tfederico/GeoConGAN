@@ -292,7 +292,7 @@ D_Y.apply(weights_init_normal)
 
 
 
-g_params = list(G_XtoY.parameters()) + list(G_YtoX.parameters())) # Get generator parameters
+g_params = list(G_XtoY.parameters()) + list(G_YtoX.parameters()) # Get generator parameters
 d_params = list(D_X.parameters()) + list(D_Y.parameters())
 
 g_optimizer = optim.Adam(g_params, lr, [beta1, beta2])
