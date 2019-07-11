@@ -100,5 +100,11 @@ venv.bak/
 # mkdocs documentation
 /site
 
+checkpoints_geocongan/
+samples_geocongan/
+synth2real/
+*.pth
+*.txt*
+
 # mypy
 .mypy_cache/
