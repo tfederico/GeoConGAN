@@ -189,7 +189,7 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
         if epoch % print_every == 0:
             # append real and fake discriminator losses and the generator loss
             losses.append((d_X_loss.item(), d_Y_loss.item(), g_loss.item()))
-            print('Epoch [{:5d}/{:5d}] | d_X_loss: {:6.4f} | d_Y_loss: {:6.4f} | g_total_loss: {:6.4f}'.format(
+            tqdm.write('Epoch [{:5d}/{:5d}] | d_X_loss: {:6.4f} | d_Y_loss: {:6.4f} | g_total_loss: {:6.4f}'.format(
                     epoch, n_epochs, d_X_loss.item(), d_Y_loss.item(), g_loss.item()))
 
 
