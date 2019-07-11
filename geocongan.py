@@ -162,7 +162,7 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
             out_x_real = D_X(images_Y)
             d_loss_X_real = real_mse_loss(out_x_real, real.expand_as(out_x_real))
-            out_x_fake = D_X(fake_Y.detach())
+            out_x_fake = D_X(fake_Y)
             d_loss_X_fake = fake_mse_loss(out_x_fake, fake.expand_as(out_x_fake))
 
             d_X_loss = (d_loss_X_real + d_loss_X_fake) * 0.5
@@ -171,7 +171,7 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
             out_y_real = D_Y(images_X)
             d_loss_Y_real = real_mse_loss(out_y_real, real.expand_as(out_y_real))
-            out_y_fake = D_Y(fake_X.detach())
+            out_y_fake = D_Y(fake_X)
             d_loss_Y_fake = fake_mse_loss(out_y_fake, fake.expand_as(out_y_fake))
 
             d_Y_loss = (d_loss_Y_real + d_loss_Y_fake) * 0.5
