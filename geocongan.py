@@ -274,7 +274,7 @@ G_XtoY, G_YtoX, D_X, D_Y = create_model(n_res_blocks=n_res_blocks, device=device
 S = SilNet()
 S.load_state_dict(torch.load("silnet.pth"))
 S.to(device)
-S.train()
+S.eval()
 # print all of the models
 print_models(G_XtoY, G_YtoX, D_X, D_Y, S)
 
