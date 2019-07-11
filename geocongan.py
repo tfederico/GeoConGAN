@@ -102,9 +102,9 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
     fixed_Y = test_iter_Y.next()[0]
 
 
-    for epoch in range(1, n_epochs+1):
+    for epoch in tqdm(range(1, n_epochs+1)):
 
-        for batch_X, batch_Y in zip(dataloader_X, dataloader_Y):
+        for batch_X, batch_Y in tqdm(zip(dataloader_X, dataloader_Y)):
 
 
             images_X, silhouette_X = batch_X
