@@ -144,8 +144,8 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
             reconstructed_Y_loss = cycle_consistency_loss(reconstructed_Y, images_Y, lambda_weight=10)
             g_XtoY_loss = real_mse_loss(out_y, real.expand_as(out_y))
             reconstructed_X_loss = cycle_consistency_loss(reconstructed_X, images_X, lambda_weight=10)
-            geo_loss_X = silnet_loss(fake_X, images_X)
-            geo_loss_Y = silnet_loss(fake_Y, images_Y)
+            geo_loss_X = silnet_loss(fake_X, silhouette_X)
+            geo_loss_Y = silnet_loss(fake_Y, silhouette_Y)
 
             g_loss = g_YtoX_loss + g_XtoY_loss + reconstructed_X_loss + reconstructed_Y_loss + geo_loss_X + geo_loss_Y
 
