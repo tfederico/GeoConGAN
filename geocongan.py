@@ -131,9 +131,10 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
             sil_fake_X = torch.sigmoid(S(fake_X))
             sil_fake_Y = torch.sigmoid(S(fake_Y))
 
-            # SET REQUIRES GRADIENT FALSE ???
-            D_X.eval()
-            D_Y.eval()
+            for param in D_X.parameters():
+                param.requires_grad = False
+            for param in D_Y.parameters():
+                param.requires_grad = False
 
             g_optimizer.zero_grad()
 
@@ -152,17 +153,16 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
             g_loss.backward(retain_graph=True)
             g_optimizer.step()
 
-
-            # SET REQUIRES GRADIENT TRUE ???
-
-            D_X.train()
-            D_Y.train()
+            for param in D_X.parameters():
+                param.requires_grad = True
+            for param in D_Y.parameters():
+                param.requires_grad = True
 
             d_optimizer.zero_grad()
 
             out_x_real = D_X(images_Y)
             d_loss_X_real = real_mse_loss(out_x_real, real.expand_as(out_x_real))
-            out_x_fake = D_X(fake_Y)
+            out_x_fake = D_X(fake_Y.detach())
             d_loss_X_fake = fake_mse_loss(out_x_fake, fake.expand_as(out_x_fake))
 
             d_X_loss = (d_loss_X_real + d_loss_X_fake) * 0.5
@@ -171,7 +171,7 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
             out_y_real = D_Y(images_X)
             d_loss_Y_real = real_mse_loss(out_y_real, real.expand_as(out_y_real))
-            out_y_fake = D_Y(fake_X)
+            out_y_fake = D_Y(fake_X.detach())
             d_loss_Y_fake = fake_mse_loss(out_y_fake, fake.expand_as(out_y_fake))
 
             d_Y_loss = (d_loss_Y_real + d_loss_Y_fake) * 0.5
@@ -188,7 +188,7 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
             # append real and fake discriminator losses and the generator loss
             losses.append((d_X_loss.item(), d_Y_loss.item(), g_loss.item()))
             print('Epoch [{:5d}/{:5d}] | d_X_loss: {:6.4f} | d_Y_loss: {:6.4f} | g_total_loss: {:6.4f}'.format(
-                    epoch, n_epochs, d_x_loss.item(), d_y_loss.item(), g_total_loss.item()))
+                    epoch, n_epochs, d_X_loss.item(), d_Y_loss.item(), g_loss.item()))
 
 
         sample_every = 1#n_epochs/10
@@ -304,8 +304,8 @@ fake_mse_loss = torch.nn.MSELoss()
 #cycle_consistency_loss = torch.nn.L1Loss()
 
 device = torch.device("cuda:0")
-real = torch.tensor(1.0).to(device)
-fake = torch.tensor(0.0).to(device)
+real = torch.tensor(1.0, requires_grad=False).to(device)
+fake = torch.tensor(0.0, requires_grad=False).to(device)
 
 losses = training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader_Y, n_epochs=n_epochs)
 
