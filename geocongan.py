@@ -143,9 +143,9 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
             out_x = D_X(fake_Y)
             out_y = D_Y(fake_X)
 
-            g_YtoX_loss = real_mse_loss(out_x, real.expand_as(out_x))
+            g_YtoX_loss = mse_loss(out_x, real.expand_as(out_x))
             reconstructed_Y_loss = cycle_consistency_loss(reconstructed_Y, images_Y) * 10
-            g_XtoY_loss = real_mse_loss(out_y, real.expand_as(out_y))
+            g_XtoY_loss = mse_loss(out_y, real.expand_as(out_y))
             reconstructed_X_loss = cycle_consistency_loss(reconstructed_X, images_X) * 10
             geo_loss_X = silnet_loss(sil_fake_X, silhouette_X)
             geo_loss_Y = silnet_loss(sil_fake_Y, silhouette_Y)
@@ -163,18 +163,18 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
             d_optimizer.zero_grad()
 
             out_x_real = D_X(images_Y)
-            d_loss_X_real = real_mse_loss(out_x_real, real.expand_as(out_x_real))
+            d_loss_X_real = mse_loss(out_x_real, real.expand_as(out_x_real))
             out_x_fake = D_X(fake_Y) #D_X(fake_Y.detach())
-            d_loss_X_fake = fake_mse_loss(out_x_fake, fake.expand_as(out_x_fake))
+            d_loss_X_fake = mse_loss(out_x_fake, fake.expand_as(out_x_fake))
 
             d_X_loss = (d_loss_X_real + d_loss_X_fake) * 0.5
 
             d_X_loss.backward()
 
             out_y_real = D_Y(images_X)
-            d_loss_Y_real = real_mse_loss(out_y_real, real.expand_as(out_y_real))
+            d_loss_Y_real = mse_loss(out_y_real, real.expand_as(out_y_real))
             out_y_fake = D_Y(fake_X) #D_Y(fake_X.detach())
-            d_loss_Y_fake = fake_mse_loss(out_y_fake, fake.expand_as(out_y_fake))
+            d_loss_Y_fake = mse_loss(out_y_fake, fake.expand_as(out_y_fake))
 
             d_Y_loss = (d_loss_Y_real + d_loss_Y_fake) * 0.5
 
@@ -304,8 +304,7 @@ d_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(d_optimizer, lr_lambda=Lambda
 
 # Lossess (SilNet and cycle-consistency losses are imported)
 criterion_identity = torch.nn.L1Loss()
-real_mse_loss = torch.nn.MSELoss()
-fake_mse_loss = torch.nn.MSELoss()
+mse_loss = torch.nn.MSELoss()
 cycle_consistency_loss = torch.nn.L1Loss()
 silnet_loss = torch.nn.BCELoss()
 
