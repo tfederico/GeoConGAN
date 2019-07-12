@@ -212,7 +212,7 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
                     it, n_iters, d_X_loss.item(), d_Y_loss.item(), g_loss.item()))
 
 
-        sample_every = 50#n_epochs/10
+        sample_every = 10#n_epochs/10
         # Save the generated samples
         if it % sample_every == 0:
             G_YtoX.eval() # set generators to eval mode for sample generation
