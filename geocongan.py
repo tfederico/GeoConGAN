@@ -265,8 +265,8 @@ all_transforms = {'train': train_transforms, 'test': test_transforms}
 
 # Create train and test dataloaders for images from the two domains X and Y
 # image_type = directory names for our data
-dataloader_X, test_dataloader_X = get_data_loader(image_type='synth', tfs=all_transforms, batch_size=batch_size)
-dataloader_Y, test_dataloader_Y = get_data_loader(image_type='real', tfs=all_transforms, batch_size=batch_size)
+dataloader_X, test_dataloader_X = get_data_loader(image_dir='../data/synth2real', image_type='synth', tfs=all_transforms, batch_size=batch_size)
+dataloader_Y, test_dataloader_Y = get_data_loader(image_dir='../data/synth2real', image_type='real', tfs=all_transforms, batch_size=batch_size)
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 # call the function to get models
