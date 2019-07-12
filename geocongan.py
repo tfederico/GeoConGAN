@@ -167,6 +167,11 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
         for param in D_Y.parameters():
             param.requires_grad = True
 
+        for param in G_XtoY.parameters():
+            param.requires_grad = False
+        for param in G_YtoX.parameters():
+            param.requires_grad = False
+
         d_optimizer.zero_grad()
 
         out_x_real = D_X(images_Y)
@@ -191,6 +196,11 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
         d_optimizer.step()
 
+        for param in G_XtoY.parameters():
+            param.requires_grad = True
+        for param in G_YtoX.parameters():
+            param.requires_grad = True
+
 
 
 
@@ -202,7 +212,7 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
                     it, n_iters, d_X_loss.item(), d_Y_loss.item(), g_loss.item()))
 
 
-        sample_every = 100#n_epochs/10
+        sample_every = 50#n_epochs/10
         # Save the generated samples
         if it % sample_every == 0:
             G_YtoX.eval() # set generators to eval mode for sample generation
