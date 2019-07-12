@@ -210,7 +210,7 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
             G_XtoY.train()
             checkpoint(it, G_XtoY, G_YtoX, D_X, D_Y, S)
 
-    checkpoint(n_iters, G_XtoY, G_YtoX, D_X, D_Y, S))
+    checkpoint(n_iters+1, G_XtoY, G_YtoX, D_X, D_Y, S))
     return losses
 
 
@@ -230,16 +230,7 @@ lr = 0.0002
 beta1 = 0.5
 beta2 = 0.999 # default value
 
-<<<<<<< HEAD
 n_iters = 20000
-=======
-# hyperparams for SteLR optimizer
-lr_silnet = 1e-3
-step_size = 2
-gamma = 0.2
-
-n_epochs = 80
->>>>>>> a79c248cd9b536fd4116095ef15f65fdbbc65eff
 
 features_train_transforms = transforms.Compose([ #transforms.Resize(int(image_size*1.11), Image.BICUBIC),
                 #transforms.RandomCrop(image_size),
@@ -303,13 +294,8 @@ d_optimizer = optim.Adam(d_params, lr, [beta1, beta2])
 #sil_optimizer = optim.Adam(S.parameters(), lr, [beta1, beta2])
 
 # Create learning rate schedulers for generators and discriminators
-<<<<<<< HEAD
 #g_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(g_optimizer, lr_lambda=LambdaLR(n_epochs, 1, 100).step)
 #d_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(d_optimizer, lr_lambda=LambdaLR(n_epochs, 1, 100).step)
-=======
-g_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(g_optimizer, lr_lambda=LambdaLR(n_epochs, 1, 40).step)
-d_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(d_optimizer, lr_lambda=LambdaLR(n_epochs, 1, 40).step)
->>>>>>> a79c248cd9b536fd4116095ef15f65fdbbc65eff
 #s_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(d_optimizer, lr_lambda=LambdaLR(n_epochs, 1, 100).step)
 
 # Lossess (SilNet and cycle-consistency losses are imported)
