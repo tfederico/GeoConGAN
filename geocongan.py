@@ -105,7 +105,7 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
     iter_X = iter(dataloader_X)
     iter_Y = iter(dataloader_Y)
-    n_batches = min(len(iter_X), len(iter_Y)
+    n_batches = min(len(iter_X), len(iter_Y))
 
     for it in tqdm(range(1, n_iters+1), desc="Iteration"):
 
