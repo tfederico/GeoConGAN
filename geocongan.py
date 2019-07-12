@@ -189,6 +189,9 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
         d_optimizer.step()
 
+        fake_X.requires_grad = True
+        fake_Y.requires_grad = True
+
 
 
 
