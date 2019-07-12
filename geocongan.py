@@ -159,18 +159,13 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
         g_loss = g_YtoX_loss + g_XtoY_loss + reconstructed_X_loss + reconstructed_Y_loss + geo_loss_X + geo_loss_Y
 
-        g_loss.backward(retain_graph=True)
+        g_loss.backward()
         g_optimizer.step()
 
         for param in D_X.parameters():
             param.requires_grad = True
         for param in D_Y.parameters():
             param.requires_grad = True
-
-        for param in G_XtoY.parameters():
-            param.requires_grad = False
-        for param in G_YtoX.parameters():
-            param.requires_grad = False
 
         d_optimizer.zero_grad()
 
@@ -195,14 +190,6 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
         d_Y_loss.backward()
 
         d_optimizer.step()
-
-        for param in G_XtoY.parameters():
-            param.requires_grad = True
-        for param in G_YtoX.parameters():
-            param.requires_grad = True
-
-
-
 
         # Print the log info
         if it % print_every == 0:
