@@ -88,7 +88,7 @@ def create_model(n_res_blocks=9, device="cpu"):
     return G_XtoY, G_YtoX, D_X, D_Y
 
 
-def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader_Y, n_epochs=200):
+def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader_Y, n_iters=200):
 
     print_every = 1#n_epochs//10
 
@@ -103,113 +103,114 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
     fixed_X = test_iter_X.next()[0]
     fixed_Y = test_iter_Y.next()[0]
 
+    iter_X = iter(dataloader_X)
+    iter_Y = iter(dataloader_Y)
+    n_batches = min(len(iter_X), len(iter_Y)
 
-    for epoch in tqdm(range(1, n_epochs+1), desc="Epoch"):
+    for it in tqdm(range(1, n_iters+1), desc="Iteration"):
 
-        for batch_X, batch_Y in tqdm(zip(dataloader_X, dataloader_Y), desc="Batch"):
-
-
-            images_X, silhouette_X = batch_X
-            #images_X = scale(images_X) # make sure to scale to a range -1 to 1
-
-            images_Y, silhouette_Y = batch_Y
-            #images_Y = scale(images_Y)
-
-            # move images to GPU if available (otherwise stay on CPU)
-            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-            images_X = images_X.to(device)
-            images_Y = images_Y.to(device)
-            silhouette_X = silhouette_X.to(device)
-            silhouette_Y = silhouette_Y.to(device)
+        if it % n_batches == 0:
+            iter_X = iter(dataloader_X)
+            iter_Y = iter(dataloader_Y)
 
 
-            # FORWARD PASS
 
-            fake_X = G_YtoX(images_Y)
-            fake_Y = G_XtoY(images_X)
-            reconstructed_Y = G_XtoY(fake_X)
-            reconstructed_X = G_YtoX(fake_Y)
+        images_X, silhouette_X = next(iter_X)
+        #images_X = scale(images_X) # make sure to scale to a range -1 to 1
+
+        images_Y, silhouette_Y = next(iter_Y)
+        #images_Y = scale(images_Y)
+
+        # move images to GPU if available (otherwise stay on CPU)
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        images_X = images_X.to(device)
+        images_Y = images_Y.to(device)
+        silhouette_X = silhouette_X.to(device)
+        silhouette_Y = silhouette_Y.to(device)
 
 
-            sil_fake_X = torch.sigmoid(S(fake_X))
-            sil_fake_Y = torch.sigmoid(S(fake_Y))
+        # FORWARD PASS
 
-            for param in D_X.parameters():
-                param.requires_grad = False
-            for param in D_Y.parameters():
-                param.requires_grad = False
+        fake_X = G_YtoX(images_Y)
+        fake_Y = G_XtoY(images_X)
 
-            g_optimizer.zero_grad()
+        sil_fake_X = torch.sigmoid(S(fake_X))
+        sil_fake_Y = torch.sigmoid(S(fake_Y))
 
-            out_x = D_X(fake_Y)
-            out_y = D_Y(fake_X)
+        reconstructed_Y = G_XtoY(fake_X)
+        reconstructed_X = G_YtoX(fake_Y)
 
-            g_YtoX_loss = mse_loss(out_x, real.expand_as(out_x))
-            reconstructed_Y_loss = cycle_consistency_loss(reconstructed_Y, images_Y) * 10
-            g_XtoY_loss = mse_loss(out_y, real.expand_as(out_y))
-            reconstructed_X_loss = cycle_consistency_loss(reconstructed_X, images_X) * 10
-            geo_loss_X = silnet_loss(sil_fake_X, silhouette_X)
-            geo_loss_Y = silnet_loss(sil_fake_Y, silhouette_Y)
+        for param in D_X.parameters():
+            param.requires_grad = False
+        for param in D_Y.parameters():
+            param.requires_grad = False
 
-            g_loss = g_YtoX_loss + g_XtoY_loss + reconstructed_X_loss + reconstructed_Y_loss + geo_loss_X + geo_loss_Y
+        g_optimizer.zero_grad()
 
-            g_loss.backward(retain_graph=True)
-            g_optimizer.step()
+        out_x = D_X(fake_Y)
+        out_y = D_Y(fake_X)
 
-            for param in D_X.parameters():
-                param.requires_grad = True
-            for param in D_Y.parameters():
-                param.requires_grad = True
+        g_YtoX_loss = mse_loss(out_x, real.expand_as(out_x))
+        reconstructed_Y_loss = cycle_consistency_loss(reconstructed_Y, images_Y) * 10
+        g_XtoY_loss = mse_loss(out_y, real.expand_as(out_y))
+        reconstructed_X_loss = cycle_consistency_loss(reconstructed_X, images_X) * 10
+        geo_loss_X = silnet_loss(sil_fake_X, silhouette_X)
+        geo_loss_Y = silnet_loss(sil_fake_Y, silhouette_Y)
 
-            d_optimizer.zero_grad()
+        g_loss = g_YtoX_loss + g_XtoY_loss + reconstructed_X_loss + reconstructed_Y_loss + geo_loss_X + geo_loss_Y
 
-            out_x_real = D_X(images_Y)
-            d_loss_X_real = mse_loss(out_x_real, real.expand_as(out_x_real))
-            out_x_fake = D_X(fake_Y) #D_X(fake_Y.detach())
-            d_loss_X_fake = mse_loss(out_x_fake, fake.expand_as(out_x_fake))
+        g_loss.backward(retain_graph=True)
+        g_optimizer.step()
 
-            d_X_loss = (d_loss_X_real + d_loss_X_fake) * 0.5
+        for param in D_X.parameters():
+            param.requires_grad = True
+        for param in D_Y.parameters():
+            param.requires_grad = True
 
-            d_X_loss.backward()
+        d_optimizer.zero_grad()
 
-            out_y_real = D_Y(images_X)
-            d_loss_Y_real = mse_loss(out_y_real, real.expand_as(out_y_real))
-            out_y_fake = D_Y(fake_X) #D_Y(fake_X.detach())
-            d_loss_Y_fake = mse_loss(out_y_fake, fake.expand_as(out_y_fake))
+        out_x_real = D_X(images_Y)
+        d_loss_X_real = mse_loss(out_x_real, real.expand_as(out_x_real))
+        out_x_fake = D_X(fake_Y) #D_X(fake_Y.detach())
+        d_loss_X_fake = mse_loss(out_x_fake, fake.expand_as(out_x_fake))
 
-            d_Y_loss = (d_loss_Y_real + d_loss_Y_fake) * 0.5
+        d_X_loss = (d_loss_X_real + d_loss_X_fake) * 0.5
 
-            d_Y_loss.backward()
+        d_X_loss.backward()
 
-            d_optimizer.step()
+        out_y_real = D_Y(images_X)
+        d_loss_Y_real = mse_loss(out_y_real, real.expand_as(out_y_real))
+        out_y_fake = D_Y(fake_X) #D_Y(fake_X.detach())
+        d_loss_Y_fake = mse_loss(out_y_fake, fake.expand_as(out_y_fake))
+
+        d_Y_loss = (d_loss_Y_real + d_loss_Y_fake) * 0.5
+
+        d_Y_loss.backward()
+
+        d_optimizer.step()
 
 
 
 
         # Print the log info
-        if epoch % print_every == 0:
+        if it % print_every == 0:
             # append real and fake discriminator losses and the generator loss
             losses.append((d_X_loss.item(), d_Y_loss.item(), g_loss.item()))
-            tqdm.write('Epoch [{:5d}/{:5d}] | d_X_loss: {:6.4f} | d_Y_loss: {:6.4f} | g_total_loss: {:6.4f}'.format(
-                    epoch, n_epochs, d_X_loss.item(), d_Y_loss.item(), g_loss.item()))
+            tqdm.write('Iteration [{:5d}/{:5d}] | d_X_loss: {:6.4f} | d_Y_loss: {:6.4f} | g_total_loss: {:6.4f}'.format(
+                    it, n_iters, d_X_loss.item(), d_Y_loss.item(), g_loss.item()))
 
 
         sample_every = 1#n_epochs/10
         # Save the generated samples
-        if epoch % sample_every == 0:
-            with torch.no_grad():
-                G_YtoX.eval() # set generators to eval mode for sample generation
-                G_XtoY.eval()
-                save_samples(epoch, fixed_Y, fixed_X, G_YtoX, G_XtoY, batch_size=batch_size)
+        if it % sample_every == 0:
+            G_YtoX.eval() # set generators to eval mode for sample generation
+            G_XtoY.eval()
+            save_samples(iter, fixed_Y, fixed_X, G_YtoX, G_XtoY, batch_size=batch_size)
             G_YtoX.train()
             G_XtoY.train()
+            checkpoint(it, G_XtoY, G_YtoX, D_X, D_Y, S)
 
-        # Update learning rates
-        g_lr_scheduler.step()
-        d_lr_scheduler.step()
-
-        checkpoint(epoch, G_XtoY, G_YtoX, D_X, D_Y, S)
-
+    checkpoint(n_iters, G_XtoY, G_YtoX, D_X, D_Y, S))
     return losses
 
 
@@ -229,12 +230,7 @@ lr = 0.0002
 beta1 = 0.5
 beta2 = 0.999 # default value
 
-# hyperparams for SteLR optimizer
-lr_silnet = 1e-3
-step_size = 2
-gamma = 0.2
-
-n_epochs = 200
+n_iters = 20000
 
 features_train_transforms = transforms.Compose([ #transforms.Resize(int(image_size*1.11), Image.BICUBIC),
                 #transforms.RandomCrop(image_size),
@@ -279,8 +275,6 @@ S = SilNet()
 S.load_state_dict(torch.load("silnet.pth"))
 S.to(device)
 S.eval()
-for param in S.parameters():
-    param.requires_grad = False
 
 # print all of the models
 print_models(G_XtoY, G_YtoX, D_X, D_Y, S)
@@ -300,8 +294,8 @@ d_optimizer = optim.Adam(d_params, lr, [beta1, beta2])
 #sil_optimizer = optim.Adam(S.parameters(), lr, [beta1, beta2])
 
 # Create learning rate schedulers for generators and discriminators
-g_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(g_optimizer, lr_lambda=LambdaLR(n_epochs, 1, 100).step)
-d_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(d_optimizer, lr_lambda=LambdaLR(n_epochs, 1, 100).step)
+#g_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(g_optimizer, lr_lambda=LambdaLR(n_epochs, 1, 100).step)
+#d_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(d_optimizer, lr_lambda=LambdaLR(n_epochs, 1, 100).step)
 #s_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(d_optimizer, lr_lambda=LambdaLR(n_epochs, 1, 100).step)
 
 # Lossess (SilNet and cycle-consistency losses are imported)
@@ -313,7 +307,7 @@ silnet_loss = torch.nn.BCELoss()
 real = torch.tensor(1.0, requires_grad=False).to(device)
 fake = torch.tensor(0.0, requires_grad=False).to(device)
 
-losses = training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader_Y, n_epochs=n_epochs)
+losses = training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader_Y, n_iters=n_iters)
 
 fig, ax = plt.subplots(figsize=(12,8))
 losses = np.array(losses)
