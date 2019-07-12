@@ -210,7 +210,7 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
             G_XtoY.train()
             checkpoint(it, G_XtoY, G_YtoX, D_X, D_Y, S)
 
-    checkpoint(n_iters+1, G_XtoY, G_YtoX, D_X, D_Y, S))
+    checkpoint(n_iters+1, G_XtoY, G_YtoX, D_X, D_Y, S)
     return losses
 
 
