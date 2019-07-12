@@ -18,6 +18,7 @@ class HandsDataset(Dataset):
 		self.targ_transform = transform['target']
 		self.feat_prefix = "feature"
 		self.targ_prefix = "mask"
+		self.images_ext = ".png"
 
 	def __len__(self):
 		return self.size
@@ -25,14 +26,11 @@ class HandsDataset(Dataset):
 	def __getitem__(self, idx):
 
 		idx = str(int(idx)) # why??
-		images_ext = ".png"
 
-		feature_img_name = os.path.join(self.path, self.feat_prefix + idx + images_ext)
-		target_img_name = os.path.join(self.path, self.targ_prefix + idx + images_ext)
+		feature_img_name = os.path.join(self.path, self.feat_prefix + idx + self.images_ext)
+		target_img_name = os.path.join(self.path, self.targ_prefix + idx + self.images_ext)
 		feature_image = Image.open(feature_img_name)
 		target_image = Image.open(target_img_name)
-		feature_image = np.array(feature_image)
-		target_image = np.array(target_image)
 
 		if self.feat_transform:
 			feature_image = self.feat_transform(feature_image)
