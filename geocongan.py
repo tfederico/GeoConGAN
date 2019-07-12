@@ -143,7 +143,7 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
         for param in D_Y.parameters():
             param.requires_grad = False
 
-        g_optimizer.zero_grad(retain_graph=True)
+        g_optimizer.zero_grad()
 
         out_x = D_X(fake_Y)
         out_y = D_Y(fake_X)
