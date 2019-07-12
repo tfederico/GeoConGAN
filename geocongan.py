@@ -113,8 +113,6 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
             iter_X = iter(dataloader_X)
             iter_Y = iter(dataloader_Y)
 
-
-
         images_X, silhouette_X = next(iter_X)
         #images_X = scale(images_X) # make sure to scale to a range -1 to 1
 
@@ -145,7 +143,7 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
         for param in D_Y.parameters():
             param.requires_grad = False
 
-        g_optimizer.zero_grad()
+        g_optimizer.zero_grad(retain_graph=True)
 
         out_x = D_X(fake_Y)
         out_y = D_Y(fake_X)
@@ -159,7 +157,7 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
         g_loss = g_YtoX_loss + g_XtoY_loss + reconstructed_X_loss + reconstructed_Y_loss + geo_loss_X + geo_loss_Y
 
-        g_loss.backward()
+        g_loss.backward(retain_graph=True)
         g_optimizer.step()
 
         for param in D_X.parameters():
