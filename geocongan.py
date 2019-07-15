@@ -228,7 +228,7 @@ lr = 0.0002
 beta1 = 0.5
 beta2 = 0.999 # default value
 
-n_iters = 20000
+n_iters = 10000
 
 features_train_transforms = transforms.Compose([ #transforms.Resize(int(image_size*1.11), Image.BICUBIC),
                 #transforms.RandomCrop(image_size),
