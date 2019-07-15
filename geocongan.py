@@ -157,7 +157,7 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
         g_loss = g_YtoX_loss + g_XtoY_loss + reconstructed_X_loss + reconstructed_Y_loss + geo_loss_X + geo_loss_Y
 
-        g_loss.backward(retain_graph=True)
+        g_loss.backward()
         g_optimizer.step()
 
         for param in D_X.parameters():
