@@ -220,7 +220,7 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
 
 image_size = 256
-batch_size = 4
+batch_size = 8
 n_res_blocks = 9
 
 # hyperparams for Adam optimizer
