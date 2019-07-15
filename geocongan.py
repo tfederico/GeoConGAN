@@ -69,8 +69,8 @@ def create_model(n_res_blocks=9, device="cpu"):
     """Builds the generators and discriminators."""
 
     # Instantiate generators
-    G_XtoY = CycleGenerator(n_residual_blocks=n_res_blocks)
-    G_YtoX = CycleGenerator(n_residual_blocks=n_res_blocks)
+    G_XtoY = CycleGenerator(n_residual_blocks=n_res_blocks, pool_size=25)
+    G_YtoX = CycleGenerator(n_residual_blocks=n_res_blocks, pool_size=25)
     # Instantiate discriminators
     D_X = Discriminator()
     D_Y = Discriminator()
@@ -100,8 +100,8 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
     # Get some fixed data from domains X and Y for sampling. These are images that are held
     # constant throughout training, that allow us to inspect the model's performance.
-    fixed_X, _ = test_iter_X.next()
-    fixed_Y, _ = test_iter_Y.next()
+    fixed_X, mask_fixed_X = test_iter_X.next()
+    fixed_Y, mask_fixed_Y = test_iter_Y.next()
 
     iter_X = iter(dataloader_X)
     iter_Y = iter(dataloader_Y)
@@ -145,14 +145,14 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
         g_optimizer.zero_grad()
 
-        #same_X = G_YtoX(images_X)
-        #same_Y = G_XtoY(images_Y)
+        same_X = G_YtoX(images_X)
+        same_Y = G_XtoY(images_Y)
 
         out_x = D_X(fake_Y)
         out_y = D_Y(fake_X)
 
-        #id_X_loss = criterion_identity(same_X, images_X) * 5
-        #id_Y_loss = criterion_identity(same_Y, images_Y) * 5
+        id_X_loss = criterion_identity(same_X, images_X) * 5
+        id_Y_loss = criterion_identity(same_Y, images_Y) * 5
 
         g_YtoX_loss = mse_loss(out_x, real.expand_as(out_x))
         reconstructed_Y_loss = cycle_consistency_loss(reconstructed_Y, images_Y) * 10
@@ -161,7 +161,7 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
         geo_loss_X = silnet_loss(sil_fake_X, silhouette_X)
         geo_loss_Y = silnet_loss(sil_fake_Y, silhouette_Y)
 
-        g_loss = g_YtoX_loss + g_XtoY_loss + reconstructed_X_loss + reconstructed_Y_loss + geo_loss_X + geo_loss_Y #+ id_X_loss + id_Y_loss
+        g_loss = g_YtoX_loss + g_XtoY_loss + reconstructed_X_loss + reconstructed_Y_loss + geo_loss_X + geo_loss_Y + id_X_loss + id_Y_loss
 
         g_loss.backward()
         g_optimizer.step()
