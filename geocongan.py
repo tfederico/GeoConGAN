@@ -147,7 +147,6 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
         out_x = D_X(fake_Y)
         out_y = D_Y(fake_X)
-        print(out_x)
 
         g_YtoX_loss = mse_loss(out_x, real.expand_as(out_x))
         reconstructed_Y_loss = cycle_consistency_loss(reconstructed_Y, images_Y) * 10
@@ -171,7 +170,10 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
         out_x_real = D_X(images_Y)
         d_loss_X_real = mse_loss(out_x_real, real.expand_as(out_x_real))
 
-        out_x_fake = D_X(fake_Y) #D_X(fake_Y.detach())
+        copied_tensors_Y = torch.unsqueeze(fake_Y.data,0)
+        copied_tensors_X = torch.unsqueeze(fake_X.data,0)
+
+        out_x_fake = D_X(copied_tensors_Y) #D_X(fake_Y.detach())
         d_loss_X_fake = mse_loss(out_x_fake, fake.expand_as(out_x_fake))
 
         d_X_loss = (d_loss_X_real + d_loss_X_fake) * 0.5
@@ -181,7 +183,7 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
         out_y_real = D_Y(images_X)
         d_loss_Y_real = mse_loss(out_y_real, real.expand_as(out_y_real))
 
-        out_y_fake = D_Y(fake_X) #D_Y(fake_X.detach())
+        out_y_fake = D_Y(copied_tensors_X) #D_Y(fake_X.detach())
         d_loss_Y_fake = mse_loss(out_y_fake, fake.expand_as(out_y_fake))
 
         d_Y_loss = (d_loss_Y_real + d_loss_Y_fake) * 0.5
