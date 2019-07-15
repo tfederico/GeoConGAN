@@ -24,32 +24,32 @@ class HandsDataset(Dataset):
 		return self.size
 
 	def transform(self, image, mask):
-        # Resize
-        resize = transforms.Resize(size=(282, 282))
-        image = resize(image)
-        mask = resize(mask)
+		# Resize
+		resize = transforms.Resize(size=(282, 282))
+		image = resize(image)
+		mask = resize(mask)
 
-        # Random crop
-        i, j, h, w = transforms.RandomCrop.get_params(
-            image, output_size=(256, 256))
-        image = TF.crop(image, i, j, h, w)
-        mask = TF.crop(mask, i, j, h, w)
+		# Random crop
+		i, j, h, w = transforms.RandomCrop.get_params(
+		image, output_size=(256, 256))
+		image = TF.crop(image, i, j, h, w)
+		mask = TF.crop(mask, i, j, h, w)
 
-        # Random horizontal flipping
-        if random.random() > 0.5:
-            image = TF.hflip(image)
-            mask = TF.hflip(mask)
+		# Random horizontal flipping
+		if random.random() > 0.5:
+			image = TF.hflip(image)
+			mask = TF.hflip(mask)
 
-        # Random vertical flipping
-        if random.random() > 0.5:
-            image = TF.vflip(image)
-            mask = TF.vflip(mask)
+		# Random vertical flipping
+		if random.random() > 0.5:
+			image = TF.vflip(image)
+			mask = TF.vflip(mask)
 
-        # Transform to tensor
-        image = TF.to_tensor(image)
-        mask = TF.to_tensor(mask)
+		# Transform to tensor
+		image = TF.to_tensor(image)
+		mask = TF.to_tensor(mask)
 		image = TF.normalize(image, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-        return image, mask
+		return image, mask
 
 	def __getitem__(self, idx):
 
