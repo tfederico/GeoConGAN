@@ -168,20 +168,24 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
         d_optimizer.zero_grad()
 
+        pooled_fake_Y = G_XtoY.fake_pool.query(fake_Y)
+
         out_x_real = D_X(images_Y)
         d_loss_X_real = mse_loss(out_x_real, real.expand_as(out_x_real))
 
-        out_x_fake = D_X(fake_Y.detach()) #D_X(fake_Y.detach())
+        out_x_fake = D_X(pooled_fake_Y.detach()) #D_X(fake_Y.detach())
         d_loss_X_fake = mse_loss(out_x_fake, fake.expand_as(out_x_fake))
 
         d_X_loss = (d_loss_X_real + d_loss_X_fake) * 0.5
 
         d_X_loss.backward()
 
+
+        pooled_fake_X = G_YtoX.fake_pool.query(fake_X)
         out_y_real = D_Y(images_X)
         d_loss_Y_real = mse_loss(out_y_real, real.expand_as(out_y_real))
 
-        out_y_fake = D_Y(fake_X.detach()) #D_Y(fake_X.detach())
+        out_y_fake = D_Y(pooled_fake_X.detach()) #D_Y(fake_X.detach())
         d_loss_Y_fake = mse_loss(out_y_fake, fake.expand_as(out_y_fake))
 
         d_Y_loss = (d_loss_Y_real + d_loss_Y_fake) * 0.5

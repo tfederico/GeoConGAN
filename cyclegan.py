@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
+from utils_cyclegan import ImagePool
 
 class ResidualBlock(nn.Module):
     def __init__(self, in_features):
@@ -19,10 +20,10 @@ class ResidualBlock(nn.Module):
         return x + self.conv_block(x)
 
 class CycleGenerator(nn.Module):
-    def __init__(self, n_residual_blocks=9):
+    def __init__(self, n_residual_blocks=9, pool_size=50):
         super().__init__()
 
-        # Initial convolution block       
+        # Initial convolution block
         model = [   nn.ReflectionPad2d(3),
                     nn.Conv2d(3, 64, 7),
                     nn.InstanceNorm2d(64),
@@ -58,6 +59,8 @@ class CycleGenerator(nn.Module):
 
         self.model = nn.Sequential(*model)
 
+        self.fake_pool = ImagePool(pool_size=pool_size)
+
     def forward(self, x):
         return self.model(x)
 
@@ -70,15 +73,15 @@ class Discriminator(nn.Module):
                     nn.LeakyReLU(0.2, inplace=True) ]
 
         model += [  nn.Conv2d(64, 128, 4, stride=2, padding=1),
-                    nn.InstanceNorm2d(128), 
+                    nn.InstanceNorm2d(128),
                     nn.LeakyReLU(0.2, inplace=True) ]
 
         model += [  nn.Conv2d(128, 256, 4, stride=2, padding=1),
-                    nn.InstanceNorm2d(256), 
+                    nn.InstanceNorm2d(256),
                     nn.LeakyReLU(0.2, inplace=True) ]
 
         model += [  nn.Conv2d(256, 512, 4, padding=1),
-                    nn.InstanceNorm2d(512), 
+                    nn.InstanceNorm2d(512),
                     nn.LeakyReLU(0.2, inplace=True) ]
 
         # FCN classification layer
@@ -88,5 +91,5 @@ class Discriminator(nn.Module):
 
     def forward(self, x):
         x =  self.model(x)
-        
+
         return x
