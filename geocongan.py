@@ -45,7 +45,7 @@ class LambdaLR():
     def step(self, epoch):
         return 1.0 - max(0, epoch + self.offset - self.decay_start_epoch)/((self.n_epochs - self.decay_start_epoch) + 1)
 
-def get_data_loader(image_type, tfs, image_dir='synth2real',
+def get_data_loader(image_type, image_dir='synth2real',
                     image_size=256, batch_size=8, num_workers=0):
     """Returns training and test data loaders for a given image type, either 'synth' or 'real'.
     """
@@ -56,8 +56,8 @@ def get_data_loader(image_type, tfs, image_dir='synth2real',
     test_path = os.path.join(image_path, 'test_{}'.format(image_type))
 
     # define datasets using ImageFolder
-    train_dataset = HandsDataset(image_type, train_path, tfs['train'])
-    test_dataset = HandsDataset(image_type, test_path, tfs['test'])
+    train_dataset = HandsDataset(image_type, train_path)
+    test_dataset = HandsDataset(image_type, test_path)
 
     # create and return DataLoaders
     train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=num_workers)
@@ -100,8 +100,8 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
     # Get some fixed data from domains X and Y for sampling. These are images that are held
     # constant throughout training, that allow us to inspect the model's performance.
-    fixed_X = test_iter_X.next()[0]
-    fixed_Y = test_iter_Y.next()[0]
+    fixed_X, mask_fixed_X = test_iter_X.next()
+    fixed_Y, mask_fixed_Y = test_iter_Y.next()
 
     iter_X = iter(dataloader_X)
     iter_Y = iter(dataloader_Y)
@@ -234,41 +234,10 @@ beta2 = 0.999 # default value
 
 n_iters = 20000
 
-features_train_transforms = transforms.Compose([ #transforms.Resize(int(image_size*1.11), Image.BICUBIC),
-                #transforms.RandomCrop(image_size),
-                #transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                transforms.Normalize((0.5,0.5,0.5), (0.5,0.5,0.5)) ])
-
-mask_train_transforms = transforms.Compose([
-                transforms.ToTensor() ])
-
-train_transforms = {'feature': features_train_transforms, 'target': mask_train_transforms}
-
-"""train_transforms = transforms.Compose([ #transforms.Resize(int(image_size*1.11), Image.BICUBIC),
-                #transforms.RandomCrop(image_size),
-                #transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                transforms.Normalize((0.5,0.5,0.5), (0.5,0.5,0.5)) ])"""
-
-features_test_transforms = transforms.Compose([
-                transforms.ToTensor(),
-                transforms.Normalize((0.5,0.5,0.5), (0.5,0.5,0.5)) ])
-
-mask_test_transforms = transforms.Compose([
-                transforms.ToTensor() ])
-
-test_transforms = {'feature': features_test_transforms, 'target': mask_test_transforms}
-
-"""test_transforms = transforms.Compose([ transforms.ToTensor(),
-                transforms.Normalize((0.5,0.5,0.5), (0.5,0.5,0.5)) ])"""
-
-all_transforms = {'train': train_transforms, 'test': test_transforms}
-
 # Create train and test dataloaders for images from the two domains X and Y
 # image_type = directory names for our data
-dataloader_X, test_dataloader_X = get_data_loader(image_dir='../data/synth2real', image_type='synth', tfs=all_transforms, batch_size=batch_size)
-dataloader_Y, test_dataloader_Y = get_data_loader(image_dir='../data/synth2real', image_type='real', tfs=all_transforms, batch_size=batch_size)
+dataloader_X, test_dataloader_X = get_data_loader(image_dir='../data/synth2real', image_type='synth', batch_size=batch_size)
+dataloader_Y, test_dataloader_Y = get_data_loader(image_dir='../data/synth2real', image_type='real', batch_size=batch_size)
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 # call the function to get models
