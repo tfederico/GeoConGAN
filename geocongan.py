@@ -129,8 +129,6 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
         # FORWARD PASS
 
-        same_X = G_YtoX(images_X)
-        same_Y = G_XtoY(images_Y)
         fake_X = G_YtoX(images_Y)
         fake_Y = G_XtoY(images_X)
         with torch.no_grad():
