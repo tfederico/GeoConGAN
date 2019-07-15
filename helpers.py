@@ -39,7 +39,7 @@ def merge_images(sources, targets, batch_size=8):
         the first column.
         """
     _, _, h, w = sources.shape
-    row = int(np.sqrt(batch_size))
+    row = batch_size//4 + 1
     merged = np.zeros([3, row*h, row*w*2])
     for idx, (s, t) in enumerate(zip(sources, targets)):
         i = idx // row
