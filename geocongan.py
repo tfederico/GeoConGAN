@@ -148,6 +148,11 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
         out_x = D_X(fake_Y)
         out_y = D_Y(fake_X)
 
+        same_X = G_YtoX(images_X)
+        same_Y = G_XtoY(images_Y)
+
+        id_X_loss = criterion_identity(same_X, images_X) * 5
+        id_Y_loss = criterion_identity(same_Y, images_Y) * 5
 
         g_YtoX_loss = mse_loss(out_x, real.expand_as(out_x))
         reconstructed_Y_loss = cycle_consistency_loss(reconstructed_Y, images_Y) * 10
@@ -156,7 +161,7 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
         geo_loss_X = silnet_loss(sil_fake_X, silhouette_X)
         geo_loss_Y = silnet_loss(sil_fake_Y, silhouette_Y)
 
-        g_loss = g_YtoX_loss + g_XtoY_loss + reconstructed_X_loss + reconstructed_Y_loss + geo_loss_X + geo_loss_Y
+        g_loss = g_YtoX_loss + g_XtoY_loss + reconstructed_X_loss + reconstructed_Y_loss + geo_loss_X + geo_loss_Y + id_X_loss + id_Y_loss
 
         g_loss.backward()
         g_optimizer.step()
