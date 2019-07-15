@@ -100,8 +100,8 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
     # Get some fixed data from domains X and Y for sampling. These are images that are held
     # constant throughout training, that allow us to inspect the model's performance.
-    fixed_X, mask_fixed_X = test_iter_X.next()
-    fixed_Y, mask_fixed_Y = test_iter_Y.next()
+    fixed_X, _ = test_iter_X.next()
+    fixed_Y, _ = test_iter_Y.next()
 
     iter_X = iter(dataloader_X)
     iter_Y = iter(dataloader_Y)
