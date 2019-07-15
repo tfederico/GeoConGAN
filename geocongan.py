@@ -147,6 +147,7 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
         out_x = D_X(fake_Y)
         out_y = D_Y(fake_X)
+        print(out_x)
 
         g_YtoX_loss = mse_loss(out_x, real.expand_as(out_x))
         reconstructed_Y_loss = cycle_consistency_loss(reconstructed_Y, images_Y) * 10
