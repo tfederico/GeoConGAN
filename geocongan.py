@@ -134,9 +134,9 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
         fake_X = G_YtoX(images_Y)
         fake_Y = G_XtoY(images_X)
-        with torch.no_grad():
-            sil_fake_X = torch.sigmoid(S(fake_X))
-            sil_fake_Y = torch.sigmoid(S(fake_Y))
+        #with torch.no_grad():
+        sil_fake_X = torch.sigmoid(S(fake_X))
+        sil_fake_Y = torch.sigmoid(S(fake_Y))
 
         reconstructed_Y = G_XtoY(fake_X)
         reconstructed_X = G_YtoX(fake_Y)
