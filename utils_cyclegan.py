@@ -22,7 +22,7 @@ def scale(x, feature_range=(-1, 1)):
     return x
 
 # helper function for printing the model architecture
-def print_models(G_XtoY, G_YtoX, D_X, D_Y, S):
+def print_models(G_XtoY, G_YtoX, D_X, D_Y, S=None):
     """Prints model information for the generators and discriminators.
     """
     print("                     G_XtoY                    ")
@@ -45,10 +45,11 @@ def print_models(G_XtoY, G_YtoX, D_X, D_Y, S):
     print(D_Y)
     print()
 
-    print("                       S                       ")
-    print("-----------------------------------------------")
-    print(S)
-    print()
+    if S != None:
+        print("                       S                       ")
+        print("-----------------------------------------------")
+        print(S)
+        print()
 
 # helper visualization code
 def view_samples(iteration, sample_dir='samples_geocongan'):
