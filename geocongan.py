@@ -107,6 +107,9 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
     iter_Y = iter(dataloader_Y)
     n_batches = min(len(iter_X), len(iter_Y))
 
+    for param in S.parameters():
+        param.requires_grad = False
+
     for it in tqdm(range(1, n_iters+1), desc="Iteration"):
 
         if it % n_batches == 0:
@@ -251,7 +254,7 @@ G_XtoY, G_YtoX, D_X, D_Y = create_model(n_res_blocks=n_res_blocks, device=device
 S = SilNet()
 S.load_state_dict(torch.load("silnet.pth"))
 S.to(device)
-S.eval()
+#S.eval()
 
 # print all of the models
 print_models(G_XtoY, G_YtoX, D_X, D_Y, S)
