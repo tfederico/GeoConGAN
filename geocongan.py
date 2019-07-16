@@ -257,7 +257,8 @@ S.to(device)"""
 #S.eval()
 
 # print all of the models
-print_models(G_XtoY, G_YtoX, D_X, D_Y, S)
+#print_models(G_XtoY, G_YtoX, D_X, D_Y, S)
+print_models(G_XtoY, G_YtoX, D_X, D_Y)
 
 G_XtoY.apply(weights_init_normal)
 G_YtoX.apply(weights_init_normal)
