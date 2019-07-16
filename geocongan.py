@@ -69,8 +69,8 @@ def create_model(n_res_blocks=9, device="cpu"):
     """Builds the generators and discriminators."""
 
     # Instantiate generators
-    G_XtoY = CycleGenerator(n_residual_blocks=n_res_blocks)
-    G_YtoX = CycleGenerator(n_residual_blocks=n_res_blocks)
+    G_XtoY = New_CycleGenerator()#CycleGenerator(n_residual_blocks=n_res_blocks)
+    G_YtoX = New_CycleGenerator()#CycleGenerator(n_residual_blocks=n_res_blocks)
     # Instantiate discriminators
     D_X = Discriminator()
     D_Y = Discriminator()
