@@ -107,8 +107,8 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
     iter_Y = iter(dataloader_Y)
     n_batches = min(len(iter_X), len(iter_Y))
 
-    for param in S.parameters():
-        param.requires_grad = False
+    """for param in S.parameters():
+        param.requires_grad = False"""
 
     for it in tqdm(range(1, n_iters+1), desc="Iteration"):
 
@@ -134,9 +134,9 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
         fake_X = G_YtoX(images_Y)
         fake_Y = G_XtoY(images_X)
-        with torch.no_grad():
+        """with torch.no_grad():
             sil_fake_X = torch.sigmoid(S(fake_X))
-            sil_fake_Y = torch.sigmoid(S(fake_Y))
+            sil_fake_Y = torch.sigmoid(S(fake_Y))"""
 
         reconstructed_Y = G_XtoY(fake_X)
         reconstructed_X = G_YtoX(fake_Y)
@@ -161,10 +161,10 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
         reconstructed_Y_loss = cycle_consistency_loss(reconstructed_Y, images_Y) * 10
         g_XtoY_loss = mse_loss(out_y, real.expand_as(out_y))
         reconstructed_X_loss = cycle_consistency_loss(reconstructed_X, images_X) * 10
-        geo_loss_X = silnet_loss(sil_fake_X, silhouette_X)
-        geo_loss_Y = silnet_loss(sil_fake_Y, silhouette_Y)
+        """geo_loss_X = silnet_loss(sil_fake_X, silhouette_X)
+        geo_loss_Y = silnet_loss(sil_fake_Y, silhouette_Y)"""
 
-        g_loss = g_YtoX_loss + g_XtoY_loss + reconstructed_X_loss + reconstructed_Y_loss + geo_loss_X + geo_loss_Y #+ id_X_loss + id_Y_loss
+        g_loss = g_YtoX_loss + g_XtoY_loss + reconstructed_X_loss + reconstructed_Y_loss #+ geo_loss_X + geo_loss_Y #+ id_X_loss + id_Y_loss
 
         g_loss.backward()
         g_optimizer.step()
@@ -251,9 +251,9 @@ dataloader_Y, test_dataloader_Y = get_data_loader(image_dir='../data/synth2real'
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 # call the function to get models
 G_XtoY, G_YtoX, D_X, D_Y = create_model(n_res_blocks=n_res_blocks, device=device)
-S = SilNet()
+"""S = SilNet()
 S.load_state_dict(torch.load("silnet.pth"))
-S.to(device)
+S.to(device)"""
 #S.eval()
 
 # print all of the models
