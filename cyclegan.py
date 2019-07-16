@@ -1,10 +1,12 @@
 import torch.nn as nn
 import torch.nn.functional as F
 from utils_cyclegan import ImagePool
+import torch
+import functools
 
 class ResidualBlock(nn.Module):
     def __init__(self, in_features):
-        super(ResidualBlock, self).__init__()
+        super().__init__()
 
         conv_block = [  nn.ReflectionPad2d(1),
                         nn.Conv2d(in_features, in_features, 3),
@@ -101,7 +103,7 @@ class New_CycleGenerator(nn.Module):
     We adapt Torch code and idea from Justin Johnson's neural style transfer project(https://github.com/jcjohnson/fast-neural-style)
     """
 
-    def __init__(self, input_nc=3, output_nc=3, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=9, padding_type='reflect'):
+    def __init__(self, input_nc=3, output_nc=3, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=9, padding_type='reflect', pool_size=50):
         """Construct a Resnet-based generator
 
         Parameters:
@@ -114,7 +116,7 @@ class New_CycleGenerator(nn.Module):
             padding_type (str)  -- the name of padding layer in conv layers: reflect | replicate | zero
         """
         assert(n_blocks >= 0)
-        super(ResnetGenerator, self).__init__()
+        super().__init__()
         if type(norm_layer) == functools.partial:
             use_bias = norm_layer.func == nn.InstanceNorm2d
         else:
@@ -152,7 +154,7 @@ class New_CycleGenerator(nn.Module):
         self.model = nn.Sequential(*model)
 
         self.fake_pool = ImagePool(pool_size=pool_size)
-        
+
     def forward(self, input):
         """Standard forward"""
         return self.model(input)
@@ -169,7 +171,7 @@ class ResnetBlock(nn.Module):
         and implement skip connections in <forward> function.
         Original Resnet paper: https://arxiv.org/pdf/1512.03385.pdf
         """
-        super(ResnetBlock, self).__init__()
+        super().__init__()
         self.conv_block = self.build_conv_block(dim, padding_type, norm_layer, use_dropout, use_bias)
 
     def build_conv_block(self, dim, padding_type, norm_layer, use_dropout, use_bias):
@@ -229,7 +231,7 @@ class New_Discriminator(nn.Module):
             n_layers (int)  -- the number of conv layers in the discriminator
             norm_layer      -- normalization layer
         """
-        super(NLayerDiscriminator, self).__init__()
+        super().__init__()
         if type(norm_layer) == functools.partial:  # no need to use bias as BatchNorm2d has affine parameters
             use_bias = norm_layer.func == nn.InstanceNorm2d
         else:
