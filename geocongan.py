@@ -225,7 +225,7 @@ def training_loop_iters(dataloader_X, dataloader_Y, test_dataloader_X, test_data
     checkpoint(n_iters+1, G_XtoY, G_YtoX, D_X, D_Y)
     return losses
 
-def training_loop_iters(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader_Y, n_epochs=200):
+def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader_Y, n_epochs=200):
 
     print_every = 1#n_epochs//10
     sample_every = 1#n_epochs//10
