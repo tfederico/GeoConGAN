@@ -24,7 +24,7 @@ class HandsDataset(Dataset):
 
 	def transform(self, image, mask):
 		# Resize
-		resize = transforms.Resize(size=(282, 282))
+		resize = transforms.Resize(size=(286, 286))
 		image = resize(image)
 		mask = resize(mask)
 

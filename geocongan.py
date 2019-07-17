@@ -26,6 +26,7 @@ from utils_silnet import reverse_transform, masks_to_colorimg
 from hands_dataset import HandsDataset
 
 from tqdm import tqdm
+import itertools
 
 def weights_init_normal(m):
     classname = m.__class__.__name__
@@ -88,7 +89,7 @@ def create_model(n_res_blocks=9, device="cpu"):
     return G_XtoY, G_YtoX, D_X, D_Y
 
 
-def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader_Y, n_iters=200):
+def training_loop_iters(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader_Y, n_iters=20000):
 
     print_every = 1#n_epochs//10
 
@@ -224,6 +225,143 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
     checkpoint(n_iters+1, G_XtoY, G_YtoX, D_X, D_Y)
     return losses
 
+def training_loop_iters(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader_Y, n_epochs=200):
+
+    print_every = 1#n_epochs//10
+    sample_every = 1#n_epochs//10
+    # keep track of losses over time
+    losses = []
+
+    test_iter_X = iter(test_dataloader_X)
+    test_iter_Y = iter(test_dataloader_Y)
+
+    # Get some fixed data from domains X and Y for sampling. These are images that are held
+    # constant throughout training, that allow us to inspect the model's performance.
+    fixed_X, mask_fixed_X = test_iter_X.next()
+    fixed_Y, mask_fixed_Y = test_iter_Y.next()
+
+    iter_X = iter(dataloader_X)
+    iter_Y = iter(dataloader_Y)
+    n_batches = min(len(iter_X), len(iter_Y))
+
+    """for param in S.parameters():
+        param.requires_grad = False"""
+
+    for epoch in tqdm(range(1, n_epochs+1), desc="Epoch"):
+        for it in tqdm(range(1, n_batches+1), desc="Iteration"):
+
+            images_X, silhouette_X = iter_X.next()
+            #images_X = scale(images_X) # make sure to scale to a range -1 to 1
+
+            images_Y, silhouette_Y = iter_Y.next()
+            #images_Y = scale(images_Y)
+
+            # move images to GPU if available (otherwise stay on CPU)
+            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+            images_X = images_X.to(device)
+            images_Y = images_Y.to(device)
+            silhouette_X = silhouette_X.to(device)
+            silhouette_Y = silhouette_Y.to(device)
+
+
+            # FORWARD PASS
+
+            fake_X = G_YtoX(images_Y)
+            fake_Y = G_XtoY(images_X)
+            """with torch.no_grad():
+                sil_fake_X = torch.sigmoid(S(fake_X))
+                sil_fake_Y = torch.sigmoid(S(fake_Y))"""
+
+            reconstructed_Y = G_XtoY(fake_X)
+            reconstructed_X = G_YtoX(fake_Y)
+
+            for param in D_X.parameters():
+                param.requires_grad = False
+            for param in D_Y.parameters():
+                param.requires_grad = False
+
+            g_optimizer.zero_grad()
+
+            out_x = D_X(fake_Y)
+            out_y = D_Y(fake_X)
+
+            #same_X = G_YtoX(images_X)
+            #same_Y = G_XtoY(images_Y)
+
+            #id_X_loss = criterion_identity(same_X, images_X) * 5
+            #id_Y_loss = criterion_identity(same_Y, images_Y) * 5
+
+            g_YtoX_loss = mse_loss(out_x, real.expand_as(out_x))
+            reconstructed_Y_loss = cycle_consistency_loss(reconstructed_Y, images_Y) * 10
+            g_XtoY_loss = mse_loss(out_y, real.expand_as(out_y))
+            reconstructed_X_loss = cycle_consistency_loss(reconstructed_X, images_X) * 10
+            """geo_loss_X = silnet_loss(sil_fake_X, silhouette_X)
+            geo_loss_Y = silnet_loss(sil_fake_Y, silhouette_Y)"""
+
+            g_loss = g_YtoX_loss + g_XtoY_loss + reconstructed_X_loss + reconstructed_Y_loss #+ geo_loss_X + geo_loss_Y #+ id_X_loss + id_Y_loss
+
+            g_loss.backward()
+            g_optimizer.step()
+
+            for param in D_X.parameters():
+                param.requires_grad = True
+            for param in D_Y.parameters():
+                param.requires_grad = True
+
+            d_optimizer.zero_grad()
+
+            pooled_fake_Y = G_XtoY.fake_pool.query(fake_Y)
+
+            out_x_real = D_X(images_Y)
+            d_loss_X_real = mse_loss(out_x_real, real.expand_as(out_x_real))
+
+            out_x_fake = D_X(pooled_fake_Y.detach()) #D_X(fake_Y.detach())
+            d_loss_X_fake = mse_loss(out_x_fake, fake.expand_as(out_x_fake))
+
+            d_X_loss = (d_loss_X_real + d_loss_X_fake) * 0.5
+
+            d_X_loss.backward()
+
+
+            pooled_fake_X = G_YtoX.fake_pool.query(fake_X)
+            out_y_real = D_Y(images_X)
+            d_loss_Y_real = mse_loss(out_y_real, real.expand_as(out_y_real))
+
+            out_y_fake = D_Y(pooled_fake_X.detach()) #D_Y(fake_X.detach())
+            d_loss_Y_fake = mse_loss(out_y_fake, fake.expand_as(out_y_fake))
+
+            d_Y_loss = (d_loss_Y_real + d_loss_Y_fake) * 0.5
+
+            d_Y_loss.backward()
+
+            d_optimizer.step()
+
+        # Print the log info
+        if it % print_every == 0:
+            # append real and fake discriminator losses and the generator loss
+            losses.append((d_X_loss.item(), d_Y_loss.item(), g_loss.item()))
+            tqdm.write('Epoch [{:5d}/{:5d}] | d_X_loss: {:6.4f} | d_Y_loss: {:6.4f} | g_total_loss: {:6.4f}'.format(
+                    epoch, n_epochs, d_X_loss.item(), d_Y_loss.item(), g_loss.item()))
+
+
+
+        # Save the generated samples
+        if it % sample_every == 0:
+            with torch.no_grad():
+                G_YtoX.eval() # set generators to eval mode for sample generation
+                G_XtoY.eval()
+                save_samples(epoch, fixed_Y, fixed_X, G_YtoX, G_XtoY, batch_size=batch_size)
+            G_YtoX.train()
+            G_XtoY.train()
+            checkpoint(epoch, G_XtoY, G_YtoX, D_X, D_Y)
+
+        g_lr_scheduler.step()
+        d_lr_scheduler.step()
+
+        iter_X = iter(dataloader_X)
+        iter_Y = iter(dataloader_Y)
+
+    return losses
 
 
 
@@ -242,6 +380,7 @@ beta1 = 0.5
 beta2 = 0.999 # default value
 
 n_iters = 20000
+n_epochs = 200
 
 # Create train and test dataloaders for images from the two domains X and Y
 # image_type = directory names for our data
@@ -267,16 +406,16 @@ D_Y.apply(weights_init_normal)
 
 
 
-g_params = list(G_XtoY.parameters()) + list(G_YtoX.parameters()) # Get generator parameters
-d_params = list(D_X.parameters()) + list(D_Y.parameters())
+g_params = itertools.chain(G_XtoY.parameters(), G_YtoX.parameters()) # Get generator parameters
+d_params = itertools.chain(D_X.parameters(), D_Y.parameters())
 
 g_optimizer = optim.Adam(g_params, lr, [beta1, beta2])
 d_optimizer = optim.Adam(d_params, lr, [beta1, beta2])
 #sil_optimizer = optim.Adam(S.parameters(), lr, [beta1, beta2])
 
 # Create learning rate schedulers for generators and discriminators
-#g_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(g_optimizer, lr_lambda=LambdaLR(n_epochs, 1, 100).step)
-#d_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(d_optimizer, lr_lambda=LambdaLR(n_epochs, 1, 100).step)
+g_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(g_optimizer, lr_lambda=LambdaLR(n_epochs, 1, 100).step)
+d_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(d_optimizer, lr_lambda=LambdaLR(n_epochs, 1, 100).step)
 #s_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(d_optimizer, lr_lambda=LambdaLR(n_epochs, 1, 100).step)
 
 # Lossess (SilNet and cycle-consistency losses are imported)
@@ -288,7 +427,8 @@ silnet_loss = torch.nn.BCELoss()
 real = torch.tensor(1.0, requires_grad=False).to(device)
 fake = torch.tensor(0.0, requires_grad=False).to(device)
 
-losses = training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader_Y, n_iters=n_iters)
+losses = training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader_Y, n_epochs=n_epochs)
+#losses = training_loop_iters(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader_Y, n_iters=n_iters)
 
 fig, ax = plt.subplots(figsize=(12,8))
 losses = np.array(losses)
