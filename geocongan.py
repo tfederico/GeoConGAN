@@ -72,8 +72,8 @@ def create_model(n_res_blocks=9, device="cpu"):
     G_XtoY = New_CycleGenerator()#CycleGenerator(n_residual_blocks=n_res_blocks)
     G_YtoX = New_CycleGenerator()#CycleGenerator(n_residual_blocks=n_res_blocks)
     # Instantiate discriminators
-    D_X = Discriminator()
-    D_Y = Discriminator()
+    D_X = New_Discriminator()
+    D_Y = New_Discriminator()
 
     # move models to GPU, if available
     if device != "cpu":
