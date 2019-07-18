@@ -4,106 +4,13 @@ from utils_cyclegan import ImagePool
 import torch
 import functools
 
-class ResidualBlock(nn.Module):
-    def __init__(self, in_features):
-        super().__init__()
-
-        conv_block = [  nn.ReflectionPad2d(1),
-                        nn.Conv2d(in_features, in_features, 3),
-                        nn.InstanceNorm2d(in_features),
-                        nn.ReLU(inplace=True),
-                        nn.ReflectionPad2d(1),
-                        nn.Conv2d(in_features, in_features, 3),
-                        nn.InstanceNorm2d(in_features)  ]
-
-        self.conv_block = nn.Sequential(*conv_block)
-
-    def forward(self, x):
-        return x + self.conv_block(x)
-
 class CycleGenerator(nn.Module):
-    def __init__(self, n_residual_blocks=9, pool_size=50):
-        super().__init__()
-
-        # Initial convolution block
-        model = [   nn.ReflectionPad2d(3),
-                    nn.Conv2d(3, 64, 7, padding=0),
-                    nn.InstanceNorm2d(64),
-                    nn.ReLU(inplace=True) ]
-
-        # Downsampling
-        in_features = 64
-        out_features = in_features*2
-        for _ in range(2):
-            model += [  nn.Conv2d(in_features, out_features, 3, stride=2, padding=1),
-                        nn.InstanceNorm2d(out_features),
-                        nn.ReLU(inplace=True) ]
-            in_features = out_features
-            out_features = in_features*2
-
-        # Residual blocks
-        for _ in range(n_residual_blocks):
-            model += [ResidualBlock(in_features)]
-
-        # Upsampling
-        out_features = in_features//2
-        for _ in range(2):
-            model += [  nn.ConvTranspose2d(in_features, out_features, 3, stride=2, padding=1, output_padding=1),
-                        nn.InstanceNorm2d(out_features),
-                        nn.ReLU(inplace=True) ]
-            in_features = out_features
-            out_features = in_features//2
-
-        # Output layer
-        model += [  nn.ReflectionPad2d(3),
-                    nn.Conv2d(64, 3, 7),
-                    nn.Tanh() ]
-
-        self.model = nn.Sequential(*model)
-
-        self.fake_pool = ImagePool(pool_size=pool_size)
-
-    def forward(self, x):
-        return self.model(x)
-
-class Discriminator(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-        # A bunch of convolutions one after another
-        model = [   nn.Conv2d(3, 64, 4, stride=2, padding=1),
-                    nn.LeakyReLU(0.2, inplace=True) ]
-
-        model += [  nn.Conv2d(64, 128, 4, stride=2, padding=1),
-                    nn.InstanceNorm2d(128),
-                    nn.LeakyReLU(0.2, inplace=True) ]
-
-        model += [  nn.Conv2d(128, 256, 4, stride=2, padding=1),
-                    nn.InstanceNorm2d(256),
-                    nn.LeakyReLU(0.2, inplace=True) ]
-
-        model += [  nn.Conv2d(256, 512, 4, padding=1),
-                    nn.InstanceNorm2d(512),
-                    nn.LeakyReLU(0.2, inplace=True) ]
-
-        # FCN classification layer
-        model += [nn.Conv2d(512, 1, 4, padding=1)]
-
-        self.model = nn.Sequential(*model)
-
-    def forward(self, x):
-        x =  self.model(x)
-
-        return x
-
-
-class New_CycleGenerator(nn.Module):
     """Resnet-based generator that consists of Resnet blocks between a few downsampling/upsampling operations.
 
     We adapt Torch code and idea from Justin Johnson's neural style transfer project(https://github.com/jcjohnson/fast-neural-style)
     """
 
-    def __init__(self, input_nc=3, output_nc=3, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=9, padding_type='reflect', pool_size=50):
+    def __init__(self, input_nc=3, output_nc=3, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=9, padding_type='reflect'):
         """Construct a Resnet-based generator
 
         Parameters:
@@ -152,8 +59,6 @@ class New_CycleGenerator(nn.Module):
         model += [nn.Tanh()]
 
         self.model = nn.Sequential(*model)
-
-        self.fake_pool = ImagePool(pool_size=pool_size)
 
     def forward(self, input):
         """Standard forward"""
@@ -219,7 +124,7 @@ class ResnetBlock(nn.Module):
         out = x + self.conv_block(x)  # add skip connections
         return out
 
-class New_Discriminator(nn.Module):
+class Discriminator(nn.Module):
     """Defines a PatchGAN discriminator"""
 
     def __init__(self, input_nc=3, ndf=64, n_layers=3, norm_layer=nn.BatchNorm2d):
