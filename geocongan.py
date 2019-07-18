@@ -26,6 +26,7 @@ from utils_silnet import reverse_transform, masks_to_colorimg
 #from loss import silnet_loss#, cycle_consistency_loss
 from loss import GANLoss
 from hands_dataset import HandsDataset
+from utils_cyclegan import ImagePool
 
 from tqdm import tqdm
 import itertools
@@ -116,9 +117,6 @@ def training_loop_iters(dataloader_X, dataloader_Y, test_dataloader_X, test_data
 
     """for param in S.parameters():
         param.requires_grad = False"""
-
-    fake_pool_X = ImagePool(pool_size=50)
-    fake_pool_Y = ImagePool(pool_size=50)
 
     for it in tqdm(range(1, n_iters+1), desc="Iteration"):
 
@@ -254,6 +252,9 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
     """for param in S.parameters():
         param.requires_grad = False"""
 
+    fake_pool_X = ImagePool(pool_size=50)
+    fake_pool_Y = ImagePool(pool_size=50)
+
     for epoch in tqdm(range(1, n_epochs+1), desc="Epoch"):
 
         iter_X = iter(dataloader_X)
@@ -322,7 +323,7 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
             d_optimizer.zero_grad()
 
-            pooled_fake_Y = G_XtoY.fake_pool.query(fake_Y)
+            pooled_fake_Y = fake_pool_Y.query(fake_Y)
 
             out_x_real = D_X(images_Y)
             d_loss_X_real = gan_loss(out_x_real, True)
@@ -335,7 +336,7 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
             d_X_loss.backward()
 
 
-            pooled_fake_X = G_YtoX.fake_pool.query(fake_X)
+            pooled_fake_X = fake_pool_X.query(fake_X)
             out_y_real = D_Y(images_X)
             d_loss_Y_real = gan_loss(out_y_real, True)
 
