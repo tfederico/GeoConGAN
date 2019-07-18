@@ -18,7 +18,7 @@ import torch.optim as optim
 from helpers import save_samples, checkpoint
 
 # import models and utils
-from cyclegan import Discriminator, CycleGenerator, New_Discriminator, New_CycleGenerator
+from cyclegan import Discriminator, CycleGenerator
 from silnet import SilNet
 from utils_cyclegan import imshow, scale, print_models, view_samples
 from utils_silnet import reverse_transform, masks_to_colorimg
