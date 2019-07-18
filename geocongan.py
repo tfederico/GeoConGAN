@@ -1,6 +1,7 @@
 # loading in and transforming data
 import os
 import torch
+import torch.nn as nn
 from torch.utils.data import DataLoader
 import torchvision
 import torchvision.datasets as datasets
@@ -32,10 +33,10 @@ import itertools
 def weights_init_normal(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1 or classname.find('Linear') != -1:
-        torch.nn.init.normal(m.weight.data, 0.0, 0.02)
+        nn.init.normal(m.weight.data, 0.0, 0.02)
     elif classname.find('BatchNorm2d') != -1:
-        torch.nn.init.normal(m.weight.data, 1.0, 0.02)
-        torch.nn.init.constant(m.bias.data, 0.0)
+        nn.init.normal(m.weight.data, 1.0, 0.02)
+        nn.init.constant(m.bias.data, 0.0)
 
 def lambda_rule(epoch):
     lr_l = 1.0 - max(0, epoch + 1 - 100) / float(n_epochs - 100 + 1)
@@ -422,10 +423,10 @@ d_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(d_optimizer, lr_lambda=lambda
 #s_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(d_optimizer, lr_lambda=LambdaLR(n_epochs, 1, 100).step)
 
 # Lossess (SilNet and cycle-consistency losses are imported)
-criterion_identity = torch.nn.L1Loss()
+criterion_identity = nn.L1Loss()
 gan_loss = GANLoss().to(device)
-cycle_consistency_loss = torch.nn.L1Loss()
-#silnet_loss = torch.nn.BCELoss()
+cycle_consistency_loss = nn.L1Loss()
+#silnet_loss = nn.BCELoss()
 
 losses = training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader_Y, n_epochs=n_epochs)
 #losses = training_loop_iters(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader_Y, n_iters=n_iters)
